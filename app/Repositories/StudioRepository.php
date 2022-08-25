@@ -4,11 +4,19 @@ namespace App\Repositories;
 
 use App\Contracts\StudioRepositoryContract;
 use App\Models\Studio;
+use Illuminate\Database\Eloquent\Model;
 
 class StudioRepository implements StudioRepositoryContract
 {
-    public function getOrCreateStudio($studio)
+    public function findByStudioName($studioName): ?Model
     {
-        return Studio::firstOrCreate(['title' => $studio]);
+        return Studio::where('title', $studioName)->first();
+    }
+
+    public function createStudio($studioName): Model
+    {
+        $newStudio = new Studio(['title' => $studioName]);
+        $newStudio->save();
+        return $newStudio;
     }
 }

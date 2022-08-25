@@ -9,9 +9,16 @@ use App\Contracts\GenreRepositoryContract;
 
 class GenreRepository implements GenreRepositoryContract
 {
-    public function getOrCreateGenres(string $genre): Model
+    public function findByGenreName($genreName): ?Model
     {
-        return Genre::firstOrCreate(['title' => $genre]);
+        return Genre::where('title', $genreName)->first();
+    }
+
+    public function createGenre($genreName): Model
+    {
+        $newGenre = new Genre(['title' => $genreName]);
+        $newGenre->save();
+        return $newGenre;
     }
 
     public function getGamesByGenres(array $genres): Collection

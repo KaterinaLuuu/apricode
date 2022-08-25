@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Contracts\GameRepositoryContract;
 use App\Contracts\GameServiceContract;
-use App\Contracts\GenreRepositoryContract;
-use App\Contracts\StudioRepositoryContract;
+use App\Contracts\GenreServiceContract;
+use App\Contracts\StudioServiceContract;
 use App\Exceptions\GameException;
 use App\Models\Game;
 use Exception;
@@ -15,16 +15,16 @@ use Illuminate\Support\Facades\DB;
 class GameService implements GameServiceContract
 {
     private GameRepositoryContract $gamesRepository;
-    private StudioRepositoryContract $studioRepository;
-    private GenreRepositoryContract $genreRepository;
+    private StudioServiceContract $studioService;
+    private GenreServiceContract $genreService;
 
     public function __construct(GameRepositoryContract $gamesRepository,
-    StudioRepositoryContract $studioRepository,
-    GenreRepositoryContract $genreRepository)
+                                StudioServiceContract $studioService,
+                                GenreServiceContract $genreService)
     {
         $this->gamesRepository = $gamesRepository;
-        $this->studioRepository = $studioRepository;
-        $this->genreRepository = $genreRepository;
+        $this->studioService = $studioService;
+        $this->genreService = $genreService;
     }
 
     public function getGames()
@@ -39,7 +39,7 @@ class GameService implements GameServiceContract
 
     public function getGamesByGenre(array $genres): Collection
     {
-        return $this->genreRepository->getGamesByGenres($genres['genres']);
+        return $this->genreService->getGamesByGenres($genres['genres']);
     }
 
     /**
@@ -51,10 +51,10 @@ class GameService implements GameServiceContract
             DB::transaction(function () use ($data) {
                 $genres = collect();
 
-                $studioId = $this->studioRepository->getOrCreateStudio($data['studio'])->id;
+                $studioId = $this->studioService->getOrCreateStudio($data['studio'])->id;
 
                 foreach ($data['genres'] as $genre) {
-                    $genres->add($this->genreRepository->getOrCreateGenres($genre));
+                    $genres->add($this->genreService->getOrCreateGenre($genre));
                 }
 
                 $data = [
@@ -63,6 +63,7 @@ class GameService implements GameServiceContract
                 ];
 
                 $game = $this->gamesRepository->create($data);
+
 
                 $genres->each(function ($genre) use ($game) {
                     return $game->genres()->save($genre);
@@ -89,7 +90,7 @@ class GameService implements GameServiceContract
                 ];
 
                 if(isset($data['studio'])) {
-                    $studioId = $this->studioRepository->getOrCreateStudio($data['studio'])->id;
+                    $studioId = $this->studioService->getOrCreateStudio($data['studio'])->id;
                     $fields['studio_id'] = $studioId;
                 }
 
@@ -97,7 +98,7 @@ class GameService implements GameServiceContract
 
                 if(isset($data['genres'])) {
                     foreach ($data['genres'] as $genre) {
-                        $genres->add($this->genreRepository->getOrCreateGenres($genre));
+                        $genres->add($this->genreService->getOrCreateGenre($genre));
                     }
 
                     $game->genres()->detach();
